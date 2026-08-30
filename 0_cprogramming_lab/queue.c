@@ -10,12 +10,12 @@
  * Extended to store strings, 2018
  *
  * TODO: fill in your name and Andrew ID
- * @author XXX <XXX@andrew.cmu.edu>
+ * @author XXX <chaznik>
  */
 
 #include "queue.h"
 #include "harness.h"
-
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,8 +25,15 @@
  */
 queue_t *queue_new(void) {
     queue_t *q = malloc(sizeof(queue_t));
-    /* What if malloc returned NULL? */
+
+    if (q == NULL) {
+        printf("Failed to allocate new queue\n");
+        return NULL;
+    }
+
     q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
     return q;
 }
 
@@ -37,6 +44,20 @@ queue_t *queue_new(void) {
 void queue_free(queue_t *q) {
     /* How about freeing the list elements and the strings? */
     /* Free queue structure */
+    list_ele_t *temp_node;
+
+    if (q == NULL) {
+        return;
+    }
+
+    temp_node = q->head;
+
+    while (temp_node != NULL) {
+        temp_node = temp_node->next;
+        free(q->head->value);
+        free(q->head);
+        q->head = temp_node;
+    }
     free(q);
 }
 
@@ -53,13 +74,32 @@ void queue_free(queue_t *q) {
  * @return false if q is NULL, or memory allocation failed
  */
 bool queue_insert_head(queue_t *q, const char *s) {
-    list_ele_t *newh;
-    /* What should you do if the q is NULL? */
-    newh = malloc(sizeof(list_ele_t));
-    /* Don't forget to allocate space for the string and copy it */
-    /* What if either call to malloc returns NULL? */
-    newh->next = q->head;
-    q->head = newh;
+    list_ele_t *new_head;
+    char *new_val;
+
+    if (q == NULL) {
+        return false;
+    }
+
+    new_head = malloc(sizeof(list_ele_t));
+    new_val = malloc(sizeof(char) * (strlen(s) + 1));
+
+    if (new_head == NULL || new_val == NULL) {
+        printf("Failed to allocate memory for new head\n");
+        free(new_val);
+        free(new_head);
+        return false;
+    }
+
+    if (q->size == 0) {
+        q->tail = new_head;
+    }
+
+    strcpy(new_val, s);
+    new_head->value = new_val;
+    new_head->next = q->head;
+    q->head = new_head;
+    q->size += 1;
     return true;
 }
 
@@ -76,9 +116,36 @@ bool queue_insert_head(queue_t *q, const char *s) {
  * @return false if q is NULL, or memory allocation failed
  */
 bool queue_insert_tail(queue_t *q, const char *s) {
-    /* You need to write the complete code for this function */
-    /* Remember: It should operate in O(1) time */
-    return false;
+    list_ele_t *new_tail;
+    char *new_val;
+
+    if (q == NULL) {
+        return false;
+    }
+
+    new_tail = malloc(sizeof(list_ele_t));
+    new_val = malloc(sizeof(char) * (strlen(s) + 1));
+
+    if (new_tail == NULL || new_val == NULL) {
+        printf("Failed to allocate memory for new tail\n");
+        free(new_val);
+        free(new_tail);
+        return false;
+    }
+
+    strcpy(new_val, s);
+    new_tail->value = new_val;
+    new_tail->next = NULL;
+
+    if (q->size == 0) {
+        q->head = new_tail;
+    } else {
+        q->tail->next = new_tail;
+    }
+
+    q->tail = new_tail;
+    q->size += 1;
+    return true;
 }
 
 /**
@@ -115,9 +182,11 @@ bool queue_remove_head(queue_t *q, char *buf, size_t bufsize) {
  *         0 if q is NULL or empty
  */
 size_t queue_size(queue_t *q) {
-    /* You need to write the code for this function */
-    /* Remember: It should operate in O(1) time */
-    return 0;
+    if (q == NULL || q->size == 0) {
+        return 0;
+    }
+
+    return q->size;
 }
 
 /**
